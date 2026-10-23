@@ -1,29 +1,36 @@
 import sys
+import math
+from collections import Counter
 
-# Read bytes from stdin
+# Read bytes from stdin, output:
+#   bytes=<n>
+#   entropy=<H>      (4 decimal places, bits per byte)
+#   min_size=<bytes> (3 decimal places, theoretical min compressed size in bytes)
+# H(X) = -sum(p * log2(p)) over each unique byte.
+
 data = sys.stdin.buffer.read()
+total_bytes = len(data)
 
-# Dict to count bytes frequency {byte_chr: freq}
-freqs = {}
+# Non-bytes entry case
+if total_bytes == 0:
+    print(f"bytes={total_bytes}")
+    print(f"entropy=0.0000")
+    print(f"min_size=0.000")
+    sys.exit(0)
 
-def is_ascii_printable(character: str) -> bool:
-    return character.isascii() and character.isprintable()
+# Get the frequency of unique iput bytes
+freqs = Counter(data)
 
-def byte_repr(b: int) -> str:
-    character = chr(b)
-    if is_ascii_printable(character):
-        return character
-    return f"\\x{b:02x}"
+# Shannon entropy calc.
+# H -= p * log2(p)
+H = 0.0
+for count in freqs.values():
+    p = count / total_bytes
+    H -= p * math.log2(p)
 
-def count_bytes_freq(datos_bytes: bytes):
-    for b in datos_bytes:
-        freqs[b] = freqs.get(b, 0) + 1
+# Calc the theorical compressed size
+min_size = (H * total_bytes) / 8
 
-count_bytes_freq(data)
-
-# Order by numeric val from key rows
-freqs_ordered = sorted(freqs.items(), key=lambda item: item[0])
-
-for byte_val, frecuencia in freqs_ordered:
-    representacion = byte_repr(byte_val)
-    print(f"{representacion} {frecuencia}")
+print(f"bytes={total_bytes}")
+print(f"entropy={H:.4f}")
+print(f"min_size={min_size:.3}")
