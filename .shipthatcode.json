@@ -1,0 +1,70 @@
+{
+  "course": "build-compression",
+  "language": "python",
+  "language_id": 1071,
+  "entrypoint": "main.py",
+  "version": 1,
+  "content_hash": "8e49d32ccf25efd2",
+  "lessons": [
+    {
+      "slug": "frequency",
+      "tests_hash": "be08cbe66c1c"
+    },
+    {
+      "slug": "entropy",
+      "tests_hash": "ff34cc90f3c4"
+    },
+    {
+      "slug": "rle",
+      "tests_hash": "973723c8cdff"
+    },
+    {
+      "slug": "huffman-tree",
+      "tests_hash": "7d0a26159f3d"
+    },
+    {
+      "slug": "huffman-encode",
+      "tests_hash": "d3ca7562a1cc"
+    },
+    {
+      "slug": "huffman-decode",
+      "tests_hash": "c740b05f422f"
+    },
+    {
+      "slug": "canonical-huffman",
+      "tests_hash": "b9493b05b643"
+    },
+    {
+      "slug": "arithmetic-coding",
+      "tests_hash": "54174217f104"
+    },
+    {
+      "slug": "lz77-basics",
+      "tests_hash": "f695e778d6e4"
+    },
+    {
+      "slug": "lz77-decode",
+      "tests_hash": "6cdfcb812fbc"
+    },
+    {
+      "slug": "hash-chain",
+      "tests_hash": "ab047220e745"
+    },
+    {
+      "slug": "deflate",
+      "tests_hash": "26069b08433f"
+    },
+    {
+      "slug": "checksums",
+      "tests_hash": "c1c5a9fd6d3f"
+    },
+    {
+      "slug": "full-deflate",
+      "tests_hash": "1c9e1e2fd094"
+    },
+    {
+      "slug": "bwt-mtf",
+      "tests_hash": "bd007fef268d"
+    }
+  ]
+}
