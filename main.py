@@ -33,4 +33,4 @@ min_size = (H * total_bytes) / 8
 
 print(f"bytes={total_bytes}")
 print(f"entropy={H:.4f}")
-print(f"min_size={min_size:.3}")
+print(f"min_size={min_size:.3f}")
