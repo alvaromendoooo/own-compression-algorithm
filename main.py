@@ -1,61 +1,99 @@
 import sys
-import re
+import heapq
+from collections import Counter
+
+# Build a Huffman code from byte frequencies; print sorted by byte value:
+#   <byte_repr> <code>
+# Tie-breaking: smaller byte first, leaves before internal nodes.
+# Single-byte input: code is "0".
 
 def is_ascii_printable(character: str) -> bool:
     return character.isascii() and character.isprintable()
 
-def byte_repr(b: str) -> str:
-    if is_ascii_printable(b):
-        return b
-    return f"\\x{ord(b):02x}"
+def byte_repr(b: int) -> str:
+    character = chr(b)
+    if is_ascii_printable(character):
+        return character
+    return f"\\x{b:02x}"
 
-def rle_encode(data):
-    if not data:
-        return []
-    
-    result = []
-    current_char = data[0]
-    count = 1
-    
-    for char in data[1:]:
-        if char == current_char:
-            count += 1
-        else:
-            rep = byte_repr(current_char)
-            result.append(f"{count}{rep}")
-            current_char = char
-            count = 1
-            
+class Node:
+    def __init__(self, freq, byte = None, left = None, right = None, order = 0):
+        self.freq = freq
+        self.byte = byte
+        self.left = left
+        self.right = right
+        self.order = order
 
-    rep = byte_repr(current_char)
-    result.append(f"{count}{rep}")
-    
-    return result
+    # Definition of how nodes are compared in heap
+    # CRITERIA: Least freq first. In case ==, least order/byte.
+    def __lt__(self, other):
+        if self.freq != other.freq:
+            return self.freq < other.freq
+        return self.order < other.order
 
-def rle_decode(tokens):
-    result = ""
-    for token in tokens:
-        match = re.match(r"^([0-9]+)(.+)$", token)
-        if match:
-            number = int(match.group(1))
-            char = match.group(2)
-            result += char * number
-    return result
+def huffman_algorithm(freqs: dict):
+    if not freqs:
+        return {}
 
-for raw in sys.stdin:
-    line = raw.rstrip("\n")
-    if not line:
-        continue
+    # Defining an empty queue
+    min_heap = []
+    counter = 0
 
-    splitted_line = line.split(" ")
+    # 1-2. Each detected symbol as a leaf
+    for byte_val, freq in freqs.items():
+        node = Node(freq = freq, byte = byte_val, order = counter)
+        # Push each leaf in defined queue
+        # The register takes into account min-order
+        heapq.heappush(min_heap, node)
+        counter += 1
 
-    match splitted_line[0]:
-        case "ENCODE": 
-            text = " ".join(splitted_line[1:])
-            result = rle_encode(text)
-            print(" ".join(result))
-        case "DECODE":
-            result = rle_decode(splitted_line[1:])
-            print(result)
-        case _:
-            break
+    if len(freqs) == 1:
+        only_byte = list(freqs.keys())[0]
+        return {only_byte: "0"}
+
+    # 3. Repeat until one node left (root val)
+    while len(min_heap) > 1:
+        # 3.1 Pop the two smallest-frequency nodes
+        left_node = heapq.heappop(min_heap)
+        right_node = heapq.heappop(min_heap)
+
+        # 3.2 Create parent node
+        parent_node = Node(
+            freq = left_node.freq + right_node.freq,
+            left = left_node,
+            right = right_node,
+            order = counter
+        )
+        counter += 1
+
+        # 3.3 Insert parent node into heap
+        heapq.heappush(min_heap, parent_node)
+
+
+    # 4. Generating codes iterating recursively the tree
+    codes = {}
+
+    def generate_codes(node: Node, current_code = ""):
+        if node is None:
+            return
+
+        # If node is a leave, we save it's code
+        if node.byte is not None:
+            codes[node.byte] = current_code
+            return
+
+        # Iterating through left and right child in parents node
+        generate_codes(node.left, current_code + "0")
+        generate_codes(node.right, current_code + "1")
+
+    root = min_heap[0]
+    generate_codes(root, "") # Iterate from the top of the tree till leaves are found
+    return codes
+
+data = sys.stdin.buffer.read()
+freqs = dict(Counter(data))
+
+codes = huffman_algorithm(freqs)
+
+for b in sorted(codes.keys()):
+    print(f"{byte_repr(b)} {codes[b]}")
