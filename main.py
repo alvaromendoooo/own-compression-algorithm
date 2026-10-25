@@ -1,11 +1,4 @@
 import sys
-import heapq
-from collections import Counter
-
-# Build a Huffman code from byte frequencies; print sorted by byte value:
-#   <byte_repr> <code>
-# Tie-breaking: smaller byte first, leaves before internal nodes.
-# Single-byte input: code is "0".
 
 def is_ascii_printable(character: str) -> bool:
     return character.isascii() and character.isprintable()
@@ -16,105 +9,28 @@ def byte_repr(b: int) -> str:
         return character
     return f"\\x{b:02x}"
 
-class Node:
-    def __init__(self, freq, byte = None, left = None, right = None, order = 0):
-        self.freq = freq
-        self.byte = byte
-        self.left = left
-        self.right = right
-        self.order = order
+def huffman_decode(lines: list[str], n, bit_string: str) -> str:
+    result = ""
+    for line in range(n):
+        line_splitted = lines[line].split(' ')
+        line_byte: int = int(line_splitted[0])
+        line_code: str = line_splitted[1]
 
-    # Definition of how nodes are compared in heap
-    # CRITERIA: Least freq first. In case ==, least order/byte.
-    def __lt__(self, other):
-        if self.freq != other.freq:
-            return self.freq < other.freq
+        character = byte_repr(line_byte)
+        result += character
+        if bit_string.startswith(line_code):
+            bit_string = bit_string[len(line_code):]
 
-        self_is_leaf = self.byte is not None
-        other_is_leaf = other.byte is not None
+    if bit_string != "":
+        result = "ERR tuncated"
 
-        if self_is_leaf != other_is_leaf:
-            return self_is_leaf
+    return result
+lines = sys.stdin.read().splitlines()
+if not lines:
+    sys.exit(0)
 
-        if self_is_leaf and other_is_leaf:
-            return self.byte < other.byte
+n = int(lines[0].strip())
+bit_string = lines[-1]
 
-        return self.order < other.order
-
-def huffman_algorithm(freqs: dict):
-    if not freqs:
-        return {}
-
-    # Defining an empty queue
-    min_heap = []
-    counter = 0
-
-    # 1-2. Each detected symbol as a leaf
-    for byte_val, freq in freqs.items():
-        node = Node(freq = freq, byte = byte_val, order = counter)
-        # Push each leaf in defined queue
-        # The register takes into account min-order
-        heapq.heappush(min_heap, node)
-        counter += 1
-
-    if len(freqs) == 1:
-        only_byte = list(freqs.keys())[0]
-        return {only_byte: "0"}
-
-    # 3. Repeat until one node left (root val)
-    while len(min_heap) > 1:
-        # 3.1 Pop the two smallest-frequency nodes
-        left_node = heapq.heappop(min_heap)
-        right_node = heapq.heappop(min_heap)
-
-        # 3.2 Create parent node
-        parent_node = Node(
-            freq = left_node.freq + right_node.freq,
-            left = left_node,
-            right = right_node,
-            order = counter
-        )
-        counter += 1
-
-        # 3.3 Insert parent node into heap
-        heapq.heappush(min_heap, parent_node)
-
-
-    # 4. Generating codes iterating recursively the tree
-    codes = {}
-
-    def generate_codes(node: Node, current_code = ""):
-        if node is None:
-            return
-
-        # If node is a leave, we save it's code
-        if node.byte is not None:
-            codes[node.byte] = current_code
-            return
-
-        # Iterating through left and right child in parents node
-        generate_codes(node.left, current_code + "0")
-        generate_codes(node.right, current_code + "1")
-
-    root = min_heap[0]
-    generate_codes(root, "") # Iterate from the top of the tree till leaves are found
-    return codes
-
-def huffman_encode(data: bytes, codes: dict) -> tuple[str, int]:
-    if data is None:
-        return ("", 0)
-    
-    bit_string = "".join(codes[b] for b in data)
-
-    return (bit_string, len(bit_string))
-
-data = sys.stdin.buffer.read()
-data = data.rstrip(b'\r\n')
-freqs = dict(Counter(data))
-
-codes = huffman_algorithm(freqs)
-
-bits_as_string, bit_counter = huffman_encode(data, codes)
-
-print(f"bits={bit_counter}")
-print(bits_as_string)
+result = huffman_decode(lines[1:], n, bit_string)
+print(result)
