@@ -10,21 +10,28 @@ def byte_repr(b: int) -> str:
     return f"\\x{b:02x}"
 
 def huffman_decode(lines: list[str], n, bit_string: str) -> str:
-    result = ""
-    for line in range(n):
-        line_splitted = lines[line].split(' ')
+    code_to_char = {}
+    for i in range(n):
+        line_splitted = lines[i].split(' ')
         line_byte: int = int(line_splitted[0])
         line_code: str = line_splitted[1]
+        code_to_char[line_code] = byte_repr(line_byte)
 
-        character = byte_repr(line_byte)
-        result += character
-        if bit_string.startswith(line_code):
-            bit_string = bit_string[len(line_code):]
+    result = ""
+    current_code = ""
 
-    if bit_string != "":
-        result = "ERR tuncated"
+    for bit in bit_string:
+        current_code += bit
 
+        if current_code in code_to_char:
+            result += code_to_char[current_code]
+            current_code = ""
+        
+    if current_code != "":
+        return "ERR tuncated"
+    
     return result
+
 lines = sys.stdin.read().splitlines()
 if not lines:
     sys.exit(0)
@@ -32,5 +39,5 @@ if not lines:
 n = int(lines[0].strip())
 bit_string = lines[-1]
 
-result = huffman_decode(lines[1:], n, bit_string)
+result = huffman_decode(lines[1:n+1], n, bit_string)
 print(result)
