@@ -29,6 +29,16 @@ class Node:
     def __lt__(self, other):
         if self.freq != other.freq:
             return self.freq < other.freq
+
+        self_is_leaf = self.byte is not None
+        other_is_leaf = other.byte is not None
+
+        if self_is_leaf != other_is_leaf:
+            return self_is_leaf
+
+        if self_is_leaf and other_is_leaf:
+            return self.byte < other.byte
+
         return self.order < other.order
 
 def huffman_algorithm(freqs: dict):
