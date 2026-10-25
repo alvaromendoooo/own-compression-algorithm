@@ -100,10 +100,21 @@ def huffman_algorithm(freqs: dict):
     generate_codes(root, "") # Iterate from the top of the tree till leaves are found
     return codes
 
+def huffman_encode(data: bytes, codes: dict) -> tuple[str, int]:
+    if data is None:
+        return ("", 0)
+    
+    bit_string = "".join(codes[b] for b in data)
+
+    return (bit_string, len(bit_string))
+
 data = sys.stdin.buffer.read()
+data = data.rstrip(b'\r\n')
 freqs = dict(Counter(data))
 
 codes = huffman_algorithm(freqs)
 
-for b in sorted(codes.keys()):
-    print(f"{byte_repr(b)} {codes[b]}")
+bits_as_string, bit_counter = huffman_encode(data, codes)
+
+print(f"bits={bit_counter}")
+print(bits_as_string)
