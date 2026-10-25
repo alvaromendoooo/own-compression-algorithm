@@ -28,7 +28,7 @@ def huffman_decode(lines: list[str], n, bit_string: str) -> str:
             current_code = ""
         
     if current_code != "":
-        return "ERR tuncated"
+        return "ERR truncated"
     
     return result
 
