@@ -1,43 +1,60 @@
 import sys
 
-def is_ascii_printable(character: str) -> bool:
-    return character.isascii() and character.isprintable()
+# Canonical Huffman (RFC 1951 sec 3.2.2):
+# given only the BIT LENGTH of each symbol's code, reconstruct the codes
+# deterministically. This is what DEFLATE actually stores in the header.
+#
+# Input: lines of "<symbol> <code_length>".
+# Output: lines of "<symbol> <canonical_code>" sorted by symbol asc.
+#
+# Algorithm (3 steps):
+#   1. Count how many codes have each length: bl_count[L].
+#   2. Compute starting code for each length:
+#        code = 0
+#        for L in 1..MAX:
+#          code = (code + bl_count[L-1]) << 1
+#          next_code[L] = code
+#   3. Assign codes to symbols sorted by (length, symbol).
 
-def byte_repr(b: int) -> str:
-    character = chr(b)
-    if is_ascii_printable(character):
-        return character
-    return f"\\x{b:02x}"
+def cannonical_huffman(lengths: dict):
+    # Filter unused symbols
+    active_lengths = {sym: l for sym, l in lengths.items() if l > 0}
+    if not active_lengths:
+        return
 
-def huffman_decode(lines: list[str], n, bit_string: str) -> str:
-    code_to_char = {}
-    for i in range(n):
-        line_splitted = lines[i].split(' ')
-        line_byte: int = int(line_splitted[0])
-        line_code: str = line_splitted[1]
-        code_to_char[line_code] = byte_repr(line_byte)
+    max_length = max(active_lengths.values())
 
-    result = ""
-    current_code = ""
+    # 1. Count how many codes have each length
+    bl_count = {}
+    for l in active_lengths.values():
+        bl_count[l] = bl_count.get(l, 0) + 1
 
-    for bit in bit_string:
-        current_code += bit
+    # 2. Compute starting code for each length
+    next_code = {}
+    code = 0
+    for bits in range(1, max_length + 1):
+        code = (code + bl_count.get(bits - 1, 0)) << 1
+        next_code[bits] = code
 
-        if current_code in code_to_char:
-            result += code_to_char[current_code]
-            current_code = ""
-        
-    if current_code != "":
-        return "ERR truncated"
-    
-    return result
+    # 3. Assing codes to symbols sorted by (length, symbol)
+    sorted_symbs = sorted(active_lengths.keys(), key = lambda s: (active_lengths[s], s))
+    cannonical_codes = {}
+    for sym in sorted_symbs:
+        length = active_lengths[sym]
+        cannonical_codes[sym] = format(next_code[length], f"0{length}b")
+        next_code[length] += 1
+
+    for sym in sorted(cannonical_codes.keys()):
+        print(f"{sym} {cannonical_codes[sym]}")
 
 lines = sys.stdin.read().splitlines()
-if not lines:
-    sys.exit(0)
+lengths = {}
 
-n = int(lines[0].strip())
-bit_string = lines[-1]
+for line in lines:
+    line_split = line.split(" ")
+    sym = line_split[0]
+    len = int(line_split[1])
 
-result = huffman_decode(lines[1:n+1], n, bit_string)
-print(result)
+    lengths[sym] = len
+
+cannonical_huffman(lengths)
